@@ -88,3 +88,10 @@ set shiftwidth=4    " Insert 4 spaces on a tab
 set expandtab       " tabs are spaces, mainly because of python
 
 set smartindent
+
+call plug#begin()
+
+Plug 'ctrlpvim/ctrlp.vim'
+Plug 'jiangmiao/auto-pairs'
+
+call plug#end()
