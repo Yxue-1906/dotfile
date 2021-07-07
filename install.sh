@@ -22,5 +22,9 @@ if grep -q MINGW <<< $system; then
     # cmd <<< "mklink /D \"$home\\.vimrc\" \"$workdir\\vim\\.vimrc\" "
     cp -i 'vim/.vimrc' ~/
 else
-    ln -s "~/.vimrc" "vim/.vimrc"
+    if [[ -e ~/.vimrc ]];then
+        cp -i vim/.vimrc ~/.vimrc
+    else
+        ln -s "~/.vimrc" "vim/.vimrc"
+    fi
 fi
