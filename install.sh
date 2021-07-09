@@ -47,7 +47,9 @@ if grep -q MINGW <<< $system; then
         ans1=${ans1^^}
     fi
 else
-    ln -s "~/.vimrc" "vim/.vimrc"
+    # notice that source file path in symbol link base on 
+    # where the symbol link located if use related path
+    ln -s "$(pwd)/vim/.vimrc" ~/.vimrc 
 fi
 
 echo "Done"
