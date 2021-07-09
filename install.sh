@@ -14,9 +14,20 @@ function backup_if_exists() {
     fi
 }
 
-if [[ ! ( -d ~/.vim/autoload ) ]];then
+if [[ ! ( -f ~/.vim/autoload/plug.vim ) ]];then
     echo "can't detect vim-plug, install now"
-    curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+    if [[ ! ( -d ~/.vim/autoload ) ]];then 
+        mkdir -p ~/.vim/autoload
+    fi
+    # repalce github.com in plug.vim with mirror site or vim-plug can't clone plugins
+    # please replace socks5://localhost:10808 with your own proxy or just the commented line if you have no problem clone plugins or so
+    curl -x socks5://localhost:10808 https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim | sed -E 's/github(\\?\.)com/hub.fastgit\1org/g' > ~/.vim/autoload/plug.vim
+    if [[ ! ( -s ~/.vim/autoload/plug.vim ) ]];then
+        echo "error when download vim-plug, please check your network or see line 24 in install.sh"
+        rm -f ~/.vim/autoload/plug.vim
+        exit 1
+    fi
+    # curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 fi
 
 echo "buck up old dotfiles may exist"
