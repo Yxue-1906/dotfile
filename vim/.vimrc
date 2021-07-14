@@ -11,11 +11,83 @@
 " `vim -u foo`).
 set nocompatible
 
+" =============================================================================
+"  Set up plugins
+" =============================================================================
+call plug#begin()
+
+" Search
+Plug 'ctrlpvim/ctrlp.vim'
+let g:ctrlp_map = '<c-p>'   " customize ^p to open CtrlP
+
+" add setting for cscope
+if has("cscope")
+    " let temp=system('which cscope')
+    let &csprg=system("which cscope")[:-2]
+    set csto=0
+    set cst
+    set nocsverb
+    " add any database in current directory
+    if filereadable("cscope.out")
+        cs add cscope.out
+    " else add database pointed to by environment
+    elseif $CSCOPE_DB != ""
+        cs add $CSCOPE_DB
+    endif
+    set csverb
+endif
+
+" Autocomplete
+Plug 'jiangmiao/auto-pairs'
+
+" Colorschemes
+Plug 'patstockwell/vim-monokai-tasty'
+" Plug 'erichdongubler/vim-sublime-monokai'
+" Plug 'flazz/vim-colorschemes'          " Bunch of color schemes
+Plug 'sainnhe/sonokai'                 " Monokai Pro-like scheme
+Plug 'tanvirtin/monokai.nvim'
+
+call plug#end()
+
 " Turn on syntax highlighting.
 syntax on
 
 " Disable the default Vim startup message.
 set shortmess+=I
+
+" =============================================================================
+"  EDITOR SETTINGS
+" =============================================================================
+
+" Colorscheme
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+let g:molokai_original = 0
+
+if has('gui_running')
+    colorscheme base16-gruvbox-dark-hard
+elseif exists("+termguicolors")
+    set termguicolors
+    " The commands below are needed for tmux + termguicolors
+    " This is only necessary if you use "set termguicolors".
+    let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+    let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
+
+    " fixes glitch? in colors when using vim with tmux
+    set background=dark
+    set t_Co=256
+
+    colorscheme vim-monokai-tasty
+    " colorscheme sonokai
+    " let g:sonokai_style = 'shusia'
+
+elseif &t_Co < 256
+    colorscheme molokai
+    set nocursorline " looks bad in this mode
+endif
+
+" UI Config
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 " Show line numbers.
 set number
@@ -28,14 +100,8 @@ set number
 " down.
 set relativenumber
 
-" Always show the status line at the bottom, even if you only have one window open.
-set laststatus=2
-
-" The backspace key has slightly unintuitive behavior by default. For example,
-" by default, you can't backspace before the insertion point set with 'i'.
-" This configuration makes backspace behave more reasonably, in that you can
-" backspace over anything.
-set backspace=indent,eol,start
+" buffer
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 " By default, Vim doesn't let you hide a buffer (i.e. have a buffer that isn't
 " shown in any window) that has unsaved changes. This is to prevent you from "
@@ -43,6 +109,9 @@ set backspace=indent,eol,start
 " hidden buffers helpful enough to disable this protection. See `:help hidden`
 " for more information on this.
 set hidden
+
+" Search
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 " This setting makes search case-insensitive when all characters in the string
 " being searched are lowercase. However, the search becomes case-sensitive if
@@ -52,6 +121,26 @@ set smartcase
 
 " Enable searching as you type, rather than waiting till you press enter.
 set incsearch
+
+" Space & Tabs
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+set tabstop=4       " number of visual spaces per TAB
+set softtabstop=4   " number of spaces in tab when editing
+set shiftwidth=4    " Insert 4 spaces on a tab
+set expandtab       " tabs are spaces, mainly because of python
+set smartindent
+
+" Other Stuff
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+" Always show the status line at the bottom, even if you only have one window open.
+set laststatus=2
+
+" The backspace key has slightly unintuitive behavior by default. For example,
+" by default, you can't backspace before the insertion point set with 'i'.
+" This configuration makes backspace behave more reasonably, in that you can
+" backspace over anything.
+set backspace=indent,eol,start
 
 " Unbind some useless/annoying default key bindings.
 nmap Q <Nop> " 'Q' in normal mode enters Ex mode. You almost never want this.
@@ -78,37 +167,3 @@ inoremap <Left>  <ESC>:echoe "Use h"<CR>
 inoremap <Right> <ESC>:echoe "Use l"<CR>
 inoremap <Up>    <ESC>:echoe "Use k"<CR>
 inoremap <Down>  <ESC>:echoe "Use j"<CR>
-
-" add setting for cscope
-if has("cscope")
-    " let temp=system('which cscope')
-    let &csprg=system("which cscope")[:-2]
-    set csto=0
-    set cst
-    set nocsverb
-    " add any database in current directory
-    if filereadable("cscope.out")
-        cs add cscope.out
-    " else add database pointed to by environment
-    elseif $CSCOPE_DB != ""
-        cs add $CSCOPE_DB
-    endif
-    set csverb
-endif
-
-" customize ^p to open CtrlP
-let g:ctrlp_map = '<c-p>'
-
-set tabstop=4       " number of visual spaces per TAB
-set softtabstop=4   " number of spaces in tab when editing
-set shiftwidth=4    " Insert 4 spaces on a tab
-set expandtab       " tabs are spaces, mainly because of python
-
-set smartindent
-
-call plug#begin()
-
-Plug 'ctrlpvim/ctrlp.vim'
-Plug 'jiangmiao/auto-pairs'
-
-call plug#end()
