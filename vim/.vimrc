@@ -81,7 +81,8 @@ inoremap <Down>  <ESC>:echoe "Use j"<CR>
 
 " add setting for cscope
 if has("cscope")
-    set csprg=/usr/local/bin/cscope
+    " let temp=system('which cscope')
+    let &csprg=system("which cscope")[:-2]
     set csto=0
     set cst
     set nocsverb
