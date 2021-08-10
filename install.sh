@@ -45,19 +45,12 @@ if echo $(uname) | grep -q MSYS > /dev/null ; then
     echo "WIN detected"
     cd ..
     echo '
-    echo %1
-    echo %~s0
-    echo %cd%
-    echo %~dp0
-    pause
     %1 start "" mshta vbscript:CreateObject("Shell.Application").ShellExecute("cmd.exe","/c ""%~s0"" ::","","runas",1)(window.close)&&exit
-    echo %cd%
-    echo %~dp0
-    pause
     mklink "%~dp0\.vimrc" "%~dp0\dotfile\vim\.vimrc"  
     ' > mklink.bat
-    cat *bat&&read
-    cmd <<< "mklink.bat"
+    start $(pwd)
+    read -p "you should double click the 'mlink.bat' and press enter here"
+    # cmd <<< "mklink.bat"
     rm *.bat&&cd dotfile
 
     read -p 'do you want to remap <Esc - CapsLock> ?(y/N)' ans ;ans=${ans^^}
