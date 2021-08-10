@@ -28,7 +28,7 @@ if [[ ! ( -f ~/.vim/autoload/plug.vim ) ]];then
         if [[ -z "$proxy" ]];then
             proxy="socks5://localhost:10808";
         fi
-        curl -x socks5://localhost:10808 https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim | sed -E 's/github(\\?\.)com/hub.fastgit\1org/g' > ~/.vim/autoload/plug.vim
+        curl -x $proxy https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim | sed -E 's/github(\\?\.)com/hub.fastgit\1org/g' > ~/.vim/autoload/plug.vim
     fi
     if [[ ! ( -s ~/.vim/autoload/plug.vim ) ]];then
         echo "error when download vim-plug, please check your network or see line 24 in install.sh"
@@ -43,21 +43,13 @@ backup_if_exists ~/.vimrc
 
 if grep -q MINGW <<< $system; then
     echo "WIN detected"
-    # home=$HOME
-    # home=${home//\//\\}
-    # home=${home:1}
-    # toreplace=${home%%\\*}
-    # home=${home/$toreplace/${toreplace^^}:}
-
-    # workdir=$(pwd)
-    # workdir=${workdir//\//\\}
-    # workdir=${workdir:1}
-    # toreplace=${workdir%%\\*}
-    # workdir=${workdir/$toreplace/${toreplace^^}:}
-
-    # cmd <<< "mklink /D \"$home\\.vimrc\" \"$workdir\\vim\\.vimrc\" "
-
-    cp -i 'vim/.vimrc' ~/
+    cd vim
+    echo '
+    %1 start "" mshta vbscript:CreateObject("Shell.Application").ShellExecute("cmd.exe","/c ""%~s0"" ::","","runas",1)(window.close)&&exit
+    mklink "%USERPROFILE\.vimrc" "%~dp0\.vimrc"  
+    ' > mklink.bat
+    cmd <<< "mklink.bat"
+    rm *bat && cd ..
     read -p 'do you want to remap <Esc - CapsLock> ?(y/N)' ans ;ans=${ans^^}
 
     if [[ -z $ans || ${ans:0:1} = "Y" || ${ans:0:1} = $(echo -e "\n") ]];then
