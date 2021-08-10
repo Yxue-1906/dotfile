@@ -21,7 +21,15 @@ if [[ ! ( -f ~/.vim/autoload/plug.vim ) ]];then
     fi
     # repalce github.com in plug.vim with mirror site or vim-plug can't clone plugins
     # please replace socks5://localhost:10808 with your own proxy or just the commented line if you have no problem clone plugins or so
-    curl -x socks5://localhost:10808 https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim | sed -E 's/github(\\?\.)com/hub.fastgit\1org/g' > ~/.vim/autoload/plug.vim
+    if ping -n 2 google.com > /dev/null;then
+        curl https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim > ~/.vim/autoload/plug.vim
+    else
+        read -p "please specify your proxy or enter to use default proxy socks5://localhost:10808:" proxy
+        if [[ -z "$proxy" ]];then
+            proxy="socks5://localhost:10808";
+        fi
+        curl -x socks5://localhost:10808 https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim | sed -E 's/github(\\?\.)com/hub.fastgit\1org/g' > ~/.vim/autoload/plug.vim
+    fi
     if [[ ! ( -s ~/.vim/autoload/plug.vim ) ]];then
         echo "error when download vim-plug, please check your network or see line 24 in install.sh"
         rm -f ~/.vim/autoload/plug.vim
