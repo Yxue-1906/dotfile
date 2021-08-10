@@ -18,6 +18,7 @@ call plug#begin()
 
 " Search
 Plug 'ctrlpvim/ctrlp.vim'
+Plug 'erig0/cscope_dynamic'
 let g:ctrlp_map = '<c-p>'   " customize ^p to open CtrlP
 
 " add setting for cscope
