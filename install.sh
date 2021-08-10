@@ -41,15 +41,25 @@ fi
 echo "buck up old dotfiles may exist"
 backup_if_exists ~/.vimrc
 
-if grep -q MINGW <<< $system; then
+if echo $(uname) | grep -q MSYS > /dev/null ; then
     echo "WIN detected"
-    cd vim
+    cd ..
     echo '
+    echo %1
+    echo %~s0
+    echo %cd%
+    echo %~dp0
+    pause
     %1 start "" mshta vbscript:CreateObject("Shell.Application").ShellExecute("cmd.exe","/c ""%~s0"" ::","","runas",1)(window.close)&&exit
-    mklink "%USERPROFILE\.vimrc" "%~dp0\.vimrc"  
+    echo %cd%
+    echo %~dp0
+    pause
+    mklink "%~dp0\.vimrc" "%~dp0\dotfile\vim\.vimrc"  
     ' > mklink.bat
+    cat *bat&&read
     cmd <<< "mklink.bat"
-    rm *bat && cd ..
+    rm *.bat&&cd dotfile
+
     read -p 'do you want to remap <Esc - CapsLock> ?(y/N)' ans ;ans=${ans^^}
 
     if [[ -z $ans || ${ans:0:1} = "Y" || ${ans:0:1} = $(echo -e "\n") ]];then
