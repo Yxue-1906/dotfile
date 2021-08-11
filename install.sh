@@ -2,7 +2,8 @@
 
 function BACKUP_INIT(){
     OLD_DOTFILES=~/"dotfile-$(date -u +"%Y%m%d%H%M%S")";echo "buck up old dotfiles may exist"
-    backup_if_exists ~/vimrc
+    backup_if_exists ~/.vimrc
+    backup_if_exists ~/.zshrc
     if ! echo $(uname -a) | grep 'LINUX' > /dev/null;then
         echo '
         %1 start "" mshta vbscript:CreateObject("Shell.Application").ShellExecute("cmd.exe","/c ""%~s0"" ::","","runas",1)(window.close)&&exit
@@ -79,6 +80,8 @@ function CONFIG_ZSH(){
         else
             git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
         fi
+        echo "Maybe you need to install fonts to get best experience"
+        start "https://github.com/romkatv/powerlevel10k#fonts"
     fi
     if [[ ! -f $HOME/.zshrc ]];then
         if echo $(uname -a) | grep -P '^LINUX' > /dev/null;then
@@ -86,7 +89,7 @@ function CONFIG_ZSH(){
             ln -s "$(pwd)/zsh/.zshrc" ~/.zshrc 
         else
             echo '
-            mklink "<1>/.zshrc" "<2>/vim/zshrc"  
+            mklink "<1>/.zshrc" "<2>/zsh/zshrc"  
             ' | sed "s%<1>%$(cygpath -m $HOME)%" | sed "s%<2>%$(cygpath -m $(pwd))%" >> $HOME/mklink.bat
         fi
     fi
@@ -133,7 +136,6 @@ if SET_UP_APP;then
     CONFIG_ZSH
 fi
 CONFIG_VIM
-cat $HOME/mklink.bat
 start $HOME/mklink.bat # haven't test 
 sleep 5
 
