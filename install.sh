@@ -2,7 +2,8 @@
 
 OLD_DOTFILES=~/"dotfile-$(date -u +"%Y%m%d%H%M%S")"
 # mkdir $OLD_DOTFILES
-USE_PROXY=$(ping -n 2 google.com;echo $?)
+echo testing connection with google.com
+USE_PROXY=$(ping -n 2 google.com > /dev/null;echo $?)
 NO_ZSH=$(which zsh > /dev/null;echo $?)
 NO_VIM=$(which vim > /dev/null;echo $?)
 if [[ $USE_PROXY -ne 0 ]];then
@@ -72,11 +73,12 @@ function CONFIG_ZSH(){
         fi
     fi
     if [[ ! -f $HOME/.zshrc ]];then
-        if [[ echo $(uname -a) | grep -P '^LINUX' > /dev/null ]];then
+        if echo $(uname -a) | grep -P '^LINUX' > /dev/null;then
             # Linux
             ln -s "$(pwd)/zsh/.zshrc" ~/.zshrc 
         else
             # TODO: add support for MSYS
+            echo todo:support for msys
         fi
     fi
     return 0
@@ -105,9 +107,9 @@ function CONFIG_VIM(){
         echo "WIN detected"
         echo '
         %1 start "" mshta vbscript:CreateObject("Shell.Application").ShellExecute("cmd.exe","/c ""%~s0"" ::","","runas",1)(window.close)&&exit
-        mklink "%~dp0\.vimrc" "%~dp0\dotfile\vim\.vimrc"  
-        ' > ../mklink.bat#;start $(pwd)/..
-        start ../mklink.bat # haven't test 
+        mklink "<1>/.vimrc" "<2>/dotfile/vim/.vimrc"  
+        ' | sed "s%<1>%$(cygpath -m $HOME)%" | sed "s%<2>%$(cygpath -m $(pwd))%" > $HOME/mklink.bat #start $(pwd)/..
+        start $HOME/mklink.bat # haven't test 
         
         # read -p "You should double click the 'mlink.bat' and press enter here"
         # rm *.bat&&cd dotfile
