@@ -1,9 +1,50 @@
 #!/usr/bin/env bash
 
-system=$(uname);
-
 OLD_DOTFILES=~/"dotfile-$(date -u +"%Y%m%d%H%M%S")"
 # mkdir $OLD_DOTFILES
+USE_PROXY=$(ping -n 2 google.com;echo $?)
+NO_ZSH=$(which zsh > /dev/null;echo $?)
+NO_VIM=$(which vim > /dev/null;echo $?)
+if [[ $USE_PROXY -ne 0 ]];then
+    read -p "Please specify your proxy or enter to use default proxy socks5://localhost:10808:" PROXY
+    if [[ -z "$PROXY" ]];then
+        PROXY="socks5://localhost:10808";
+    fi
+fi
+
+function SET_UP_APP(){
+    if echo $(uname -a ) | grep -P "^Linux" > /dev/null;then
+        # Linux
+        sudo apt update
+        if [[ $NO_ZSH -eq 1 ]];then
+            sudo apt install zsh
+            sudo chsh -s $(which zsh)
+        fi &&
+        if [[ $NO_VIM -eq 1 ]];then
+            sudo apt install vim
+        fi &&
+        return 0 || 
+        return 1
+    elif echo $(uname -a) | grep -P "^MSYS" > /dev/null;then
+        # MSYS
+        if [[ $NO_ZSH -eq 1 ]];then
+            pacman -S zsh
+            echo -e '\003[31mPlease edit config files(msys2/mingw32/mingw64/clang64/ucrt64.ini) in your MSYS2 install directory.\033[0m' 
+        fi &&
+        if [[ $NO_VIM -eq 1 ]];then
+            pacman -S vim
+        fi &&
+        return 0 || 
+        return 1
+    elif echo $(unmae -a) | grep -P "^MINGW" > /dev/null;then
+        #Git bash
+        echo Sorry, Git bash doest support zsh!
+        return 1
+    else
+        echo Unknown Operating system!
+        return 1
+    fi
+}
 
 function backup_if_exists() {
     if [[ -f $1 || -d $1 ]];then
@@ -14,57 +55,79 @@ function backup_if_exists() {
     fi
 }
 
-if [[ ! ( -f ~/.vim/autoload/plug.vim ) ]];then
-    echo "can't detect vim-plug, install now"
-    if [[ ! ( -d ~/.vim/autoload ) ]];then 
-        mkdir -p ~/.vim/autoload
-    fi
-    # repalce github.com in plug.vim with mirror site or vim-plug can't clone plugins
-    # please replace socks5://localhost:10808 with your own proxy or just the commented line if you have no problem clone plugins or so
-    if ping -n 2 google.com > /dev/null;then
-        curl https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim > ~/.vim/autoload/plug.vim
-    else
-        read -p "please specify your proxy or enter to use default proxy socks5://localhost:10808:" proxy
-        if [[ -z "$proxy" ]];then
-            proxy="socks5://localhost:10808";
+# config zsh
+function CONFIG_ZSH(){
+    if [[ ! -d ~/.oh-my-zsh ]];then
+        if [[ $USE_PROXY -ne 0 ]];then
+            bash -c "$(curl -x $PROXY -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | sed -E 's/github\.com/hub\.fastgit\.org/g')"
+        else
+            bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
         fi
-        curl -x $proxy https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim | sed -E 's/github(\\?\.)com/hub.fastgit\1org/g' > ~/.vim/autoload/plug.vim
+    fi &&
+    if [[ ! -d ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k ]];then
+        if [[ $USE_PROXY -ne 0 ]];then
+            git clone --depth=1 https://gitee.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
+        else
+            git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
+        fi
     fi
-    if [[ ! ( -s ~/.vim/autoload/plug.vim ) ]];then
-        echo "error when download vim-plug, please check your network or see line 24 in install.sh"
+    if [[ ! -f $HOME/.zshrc ]];then
+        if [[ echo $(uname -a) | grep -P '^LINUX' > /dev/null ]];then
+            # Linux
+            ln -s "$(pwd)/zsh/.zshrc" ~/.zshrc 
+        else
+            # TODO: add support for MSYS
+        fi
+    fi
+    return 0
+}
+
+function CONFIG_VIM(){
+    if [[ ! ( -f ~/.vim/autoload/plug.vim ) ]];then
+        echo "can't detect vim-plug, install now"
+        mkdir -p ~/.vim/autoload > /dev/null 2>&1;
+        if [[ $USE_PROXY ]];then
+            # repalce github.com in plug.vim with mirror site or vim-plug can't clone plugins
+            curl -x $PROXY https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim | sed -E 's/github(\\?\.)com/hub.fastgit\1org/g' > ~/.vim/autoload/plug.vim
+        else
+            curl https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim > ~/.vim/autoload/plug.vim
+        fi && return 0 ||
+        echo "Error when download vim-plug, please check your proxy!"
         rm -f ~/.vim/autoload/plug.vim
-        exit 1
+        return 1
+        # curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
     fi
-    # curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-fi
+    if echo $(uname) | grep -q Linux > /dev/null ; then
+        # notice that source file path in symbol link base on 
+        # where the symbol link located if use related path
+        ln -s "$(pwd)/vim/.vimrc" ~/.vimrc 
+    else
+        echo "WIN detected"
+        echo '
+        %1 start "" mshta vbscript:CreateObject("Shell.Application").ShellExecute("cmd.exe","/c ""%~s0"" ::","","runas",1)(window.close)&&exit
+        mklink "%~dp0\.vimrc" "%~dp0\dotfile\vim\.vimrc"  
+        ' > ../mklink.bat#;start $(pwd)/..
+        start ../mklink.bat # haven't test 
+        
+        # read -p "You should double click the 'mlink.bat' and press enter here"
+        # rm *.bat&&cd dotfile
+
+        read -p 'Do you want to remap <Esc - CapsLock> ?(y/N)' ans ;ans=${ans^^}
+
+        if [[ -z $ans || ${ans:0:1} = "Y" || ${ans:0:1} = $(echo -e "\n") ]];then
+            cmd <<< '.\remap.reg'
+            read -p 'Remap will make effect after log out and log in, want to log out after install all the dotfiles?(n/Y)' ans1
+            ans1=${ans1^^}
+        fi
+    fi
+}
 
 echo "buck up old dotfiles may exist"
 backup_if_exists ~/.vimrc
 
-if echo $(uname) | grep -q MSYS > /dev/null ; then
-    echo "WIN detected"
-    cd ..
-    echo '
-    %1 start "" mshta vbscript:CreateObject("Shell.Application").ShellExecute("cmd.exe","/c ""%~s0"" ::","","runas",1)(window.close)&&exit
-    mklink "%~dp0\.vimrc" "%~dp0\dotfile\vim\.vimrc"  
-    ' > mklink.bat
-    start $(pwd)
-    read -p "you should double click the 'mlink.bat' and press enter here"
-    # cmd <<< "mklink.bat"
-    rm *.bat&&cd dotfile
-
-    read -p 'do you want to remap <Esc - CapsLock> ?(y/N)' ans ;ans=${ans^^}
-
-    if [[ -z $ans || ${ans:0:1} = "Y" || ${ans:0:1} = $(echo -e "\n") ]];then
-        cmd <<< '.\remap.reg'
-        read -p 'remap will make effect after log out and log in, want to log out after install all the dotfiles?(n/Y)' ans1
-        ans1=${ans1^^}
-    fi
-else
-    # notice that source file path in symbol link base on 
-    # where the symbol link located if use related path
-    ln -s "$(pwd)/vim/.vimrc" ~/.vimrc 
-fi
+SET_UP_APP
+CONFIG_ZSH
+CONFIG_VIM
 
 echo "Done"
 
