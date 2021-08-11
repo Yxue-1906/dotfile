@@ -4,7 +4,7 @@ function BACKUP_INIT(){
     OLD_DOTFILES=~/"dotfile-$(date -u +"%Y%m%d%H%M%S")";echo "buck up old dotfiles may exist"
     backup_if_exists ~/.vimrc
     backup_if_exists ~/.zshrc
-    if ! echo $(uname -a) | grep 'LINUX' > /dev/null;then
+    if ! echo $(uname -a) | grep 'Linux' > /dev/null;then
         echo '
         %1 start "" mshta vbscript:CreateObject("Shell.Application").ShellExecute("cmd.exe","/c ""%~s0"" ::","","runas",1)(window.close)&&exit
         ' > $HOME/mklink.bat
@@ -84,9 +84,9 @@ function CONFIG_ZSH(){
         start "https://github.com/romkatv/powerlevel10k#fonts"
     fi
     if [[ ! -f $HOME/.zshrc ]];then
-        if echo $(uname -a) | grep -P '^LINUX' > /dev/null;then
+        if echo $(uname -a) | grep -P '^Linux' > /dev/null;then
             # Linux
-            ln -s "$(pwd)/zsh/.zshrc" ~/.zshrc 
+            ln -s "$(pwd)/zsh/zshrc" ~/.zshrc 
         else
             echo '
             mklink "<1>/.zshrc" "<2>/zsh/zshrc"  
@@ -114,7 +114,7 @@ function CONFIG_VIM(){
     if echo $(uname) | grep -q Linux > /dev/null ; then
         # notice that source file path in symbol link base on 
         # where the symbol link located if use related path
-        ln -s "$(pwd)/vim/vimrc" ~/vimrc 
+        ln -s "$(pwd)/vim/vimrc" ~/.vimrc 
     else
         echo "WIN detected"
         echo '
