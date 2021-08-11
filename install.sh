@@ -82,6 +82,12 @@ function CONFIG_ZSH(){
         fi
         echo "Maybe you need to install fonts to get best experience"
         start "https://github.com/romkatv/powerlevel10k#fonts"
+    fi &&
+    if [[ ! -d ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions ]];then
+        git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+    fi &&
+    if [[ ! -d ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting ]];then
+        git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
     fi
     if [[ ! -f $HOME/.zshrc ]];then
         if echo $(uname -a) | grep -P '^Linux' > /dev/null;then
