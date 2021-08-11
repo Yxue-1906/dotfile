@@ -1,17 +1,25 @@
 #!/usr/bin/env bash
 
-OLD_DOTFILES=~/"dotfile-$(date -u +"%Y%m%d%H%M%S")"
-# mkdir $OLD_DOTFILES
-echo testing connection with google.com
-USE_PROXY=$(ping -n 2 google.com > /dev/null;echo $?)
-NO_ZSH=$(which zsh > /dev/null;echo $?)
-NO_VIM=$(which vim > /dev/null;echo $?)
-if [[ $USE_PROXY -ne 0 ]];then
-    read -p "Please specify your proxy or enter to use default proxy socks5://localhost:10808:" PROXY
-    if [[ -z "$PROXY" ]];then
-        PROXY="socks5://localhost:10808";
+function BACKUP_INIT(){
+    OLD_DOTFILES=~/"dotfile-$(date -u +"%Y%m%d%H%M%S")";echo "buck up old dotfiles may exist"
+    backup_if_exists ~/vimrc
+    if ! echo $(uname -a) | grep 'LINUX' > /dev/null;then
+        echo '
+        %1 start "" mshta vbscript:CreateObject("Shell.Application").ShellExecute("cmd.exe","/c ""%~s0"" ::","","runas",1)(window.close)&&exit
+        ' > $HOME/mklink.bat
     fi
-fi
+    # mkdir $OLD_DOTFILES
+    echo testing connection with google.com
+    USE_PROXY=$(ping -n 2 google.com > /dev/null;echo $?)
+    NO_ZSH=$(which zsh > /dev/null;echo $?)
+    NO_VIM=$(which vim > /dev/null;echo $?)
+    if [[ $USE_PROXY -ne 0 ]];then
+        read -p "Please specify your proxy or enter to use default proxy socks5://localhost:10808:" PROXY
+        if [[ -z "$PROXY" ]];then
+            PROXY="socks5://localhost:10808";
+        fi
+    fi
+}
 
 function SET_UP_APP(){
     if echo $(uname -a ) | grep -P "^Linux" > /dev/null;then
@@ -77,8 +85,9 @@ function CONFIG_ZSH(){
             # Linux
             ln -s "$(pwd)/zsh/.zshrc" ~/.zshrc 
         else
-            # TODO: add support for MSYS
-            echo todo:support for msys
+            echo '
+            mklink "<1>/.zshrc" "<2>/vim/zshrc"  
+            ' | sed "s%<1>%$(cygpath -m $HOME)%" | sed "s%<2>%$(cygpath -m $(pwd))%" >> $HOME/mklink.bat
         fi
     fi
     return 0
@@ -102,36 +111,34 @@ function CONFIG_VIM(){
     if echo $(uname) | grep -q Linux > /dev/null ; then
         # notice that source file path in symbol link base on 
         # where the symbol link located if use related path
-        ln -s "$(pwd)/vim/.vimrc" ~/.vimrc 
+        ln -s "$(pwd)/vim/vimrc" ~/vimrc 
     else
         echo "WIN detected"
         echo '
-        %1 start "" mshta vbscript:CreateObject("Shell.Application").ShellExecute("cmd.exe","/c ""%~s0"" ::","","runas",1)(window.close)&&exit
-        mklink "<1>/.vimrc" "<2>/dotfile/vim/.vimrc"  
-        ' | sed "s%<1>%$(cygpath -m $HOME)%" | sed "s%<2>%$(cygpath -m $(pwd))%" > $HOME/mklink.bat #start $(pwd)/..
-        start $HOME/mklink.bat # haven't test 
+        mklink "<1>/.vimrc" "<2>/vim/vimrc"  
+        ' | sed "s%<1>%$(cygpath -m $HOME)%" | sed "s%<2>%$(cygpath -m $(pwd))%" >> $HOME/mklink.bat
         
-        # read -p "You should double click the 'mlink.bat' and press enter here"
-        # rm *.bat&&cd dotfile
-
         read -p 'Do you want to remap <Esc - CapsLock> ?(y/N)' ans ;ans=${ans^^}
 
-        if [[ -z $ans || ${ans:0:1} = "Y" || ${ans:0:1} = $(echo -e "\n") ]];then
-            cmd <<< '.\remap.reg'
+        if echo $ans | grep -P '^Y$' > /dev/null;then
+            start '.\remap.reg'
             read -p 'Remap will make effect after log out and log in, want to log out after install all the dotfiles?(n/Y)' ans1
             ans1=${ans1^^}
         fi
     fi
 }
 
-echo "buck up old dotfiles may exist"
-backup_if_exists ~/.vimrc
-
-SET_UP_APP
-CONFIG_ZSH
+BACKUP_INIT
+if SET_UP_APP;then
+    CONFIG_ZSH
+fi
 CONFIG_VIM
+cat $HOME/mklink.bat
+start $HOME/mklink.bat # haven't test 
+sleep 5
 
 echo "Done"
+rm $HOME/mklink.bat > /dev/null 2>&1
 
 # echo $ans1
 if [[ -n ans1 && ${ans1:0:1} != $(echo -e "\n") && ${ans1:0:1} != "N" ]];then
