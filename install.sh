@@ -11,7 +11,7 @@ function BACKUP_INIT(){
     fi
     # mkdir $OLD_DOTFILES
     echo testing connection with google.com
-    USE_PROXY=$(ping -n 2 google.com > /dev/null;echo $?)
+    USE_PROXY=$(ping -$(if echo $(uname -a)| grep -P "^Linux" > /dev/null;then echo t;else echo n;fi) 2 google.com > /dev/null;echo $?)
     NO_ZSH=$(which zsh > /dev/null;echo $?)
     NO_VIM=$(which vim > /dev/null;echo $?)
     if [[ $USE_PROXY -ne 0 ]];then
