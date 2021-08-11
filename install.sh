@@ -106,7 +106,7 @@ function CONFIG_VIM(){
     if [[ ! ( -f ~/.vim/autoload/plug.vim ) ]];then
         echo "can't detect vim-plug, install now"
         mkdir -p ~/.vim/autoload > /dev/null 2>&1;
-        if [[ $USE_PROXY ]];then
+        if [[ $USE_PROXY -ne 0 ]];then
             # repalce github.com in plug.vim with mirror site or vim-plug can't clone plugins
             curl -x $PROXY https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim | sed -E 's/github(\\?\.)com/hub.fastgit\1org/g' > ~/.vim/autoload/plug.vim
         else
