@@ -81,7 +81,6 @@ function CONFIG_ZSH(){
             git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
         fi
         echo "Maybe you need to install fonts to get best experience"
-        start "https://github.com/romkatv/powerlevel10k#fonts"
     fi &&
     if [[ ! -d ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions ]];then
         git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
@@ -142,7 +141,9 @@ if SET_UP_APP;then
     CONFIG_ZSH
 fi
 CONFIG_VIM
-start $HOME/mklink.bat # haven't test 
+if [[ -f $HOME/mklink.bat ]];then
+    start $HOME/mklink.bat
+fi
 sleep 5
 
 echo "Done"
