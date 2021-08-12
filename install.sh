@@ -32,9 +32,10 @@ function SET_UP_APP(){
         sudo apt update
         if [[ $NO_ZSH -ne 0 ]];then
             sudo apt install zsh
-            echo Try changing default shell to zsh... &&
-                grep -P "^$USER.*/bin/.*sh^" | xargs -I line echo "\033[31m $(echo 'line' | sed -E "s%^(^USER.*)/bin/.*sh%\1$(command -v zsh)%") \033[0m"
-            sudo cp /etc/passwd ~/passwd.bak && sudo sed -i -E "s%(^$USER.*)/bin/.*sh%$(command -v zsh)%" /etc/passwd &&
+            echo Try changing default shell to zsh... ||
+                grep -P "^$USER.*/bin/.*sh^" /etc/passwd | xargs -I line echo "\033[31m $(echo 'line' | sed -E "s%^(^USER.*)/bin/.*sh%\1$(command -v zsh)%") \033[0m"
+            read -r -p "Is it correct?(y/N)" ans
+            sudo cp /etc/passwd ~/passwd.bak && sudo sed -i -E "s%(^$USER.*)/bin/.*sh%\1$(command -v zsh)%" /etc/passwd &&
             echo Success! || echo Failed, please check.
         fi &&
         if [[ $NO_VIM -ne 0 ]];then
