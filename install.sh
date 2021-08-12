@@ -2,9 +2,10 @@
 
 function BACKUP_INIT(){
     OLD_DOTFILES=~/"dotfile-$(date -u +"%Y%m%d%H%M%S")";echo "buck up old dotfiles may exist"
-    backup_if_exists ~/.vimrc
-    backup_if_exists ~/.zshrc
     if ! echo $(uname -a) | grep 'Linux' > /dev/null;then
+        if ! which diff > /dev/null;then
+            pacman -S diffutils
+        fi
         echo '
         %1 start "" mshta vbscript:CreateObject("Shell.Application").ShellExecute("cmd.exe","/c ""%~s0"" ::","","runas",1)(window.close)&&exit
         ' > $HOME/mklink.bat
@@ -14,8 +15,9 @@ function BACKUP_INIT(){
     USE_PROXY=$(ping -$(if echo $(uname -a)| grep -P "^Linux" > /dev/null;then echo c;else echo n;fi) 2 google.com > /dev/null;echo $?)
     NO_ZSH=$(which zsh > /dev/null;echo $?)
     NO_VIM=$(which vim > /dev/null;echo $?)
+    NO_TMUX=$(which tmux > /dev/null;echo $?)
     if [[ $USE_PROXY -ne 0 ]];then
-        read -p "Please specify your proxy or enter to use default proxy socks5://localhost:10808:" PROXY
+        read -p "\033[31m Please specify your proxy or enter to use default proxy\033[0m \033[41;37m socks5://localhost:10808: \033[0m" PROXY
         if [[ -z "$PROXY" ]];then
             PROXY="socks5://localhost:10808";
         fi
@@ -28,43 +30,47 @@ function SET_UP_APP(){
     if echo $(uname -a ) | grep -P "^Linux" > /dev/null;then
         # Linux
         sudo apt update
-        if [[ $NO_ZSH -eq 1 ]];then
+        if [[ $NO_ZSH -ne 0 ]];then
             sudo apt install zsh
             sudo chsh -s $(which zsh)
         fi &&
-        if [[ $NO_VIM -eq 1 ]];then
+        if [[ $NO_VIM -ne 0 ]];then
             sudo apt install vim
+        fi &&
+        if [[ $NO_TMUX -ne 0 ]];then
+            sudo apt install tmux
         fi &&
         return 0 || 
         return 1
     elif echo $(uname -a) | grep -P "^MSYS" > /dev/null;then
         # MSYS
-        if [[ $NO_ZSH -eq 1 ]];then
+        if [[ $NO_ZSH -ne 0 ]];then
             pacman -S zsh
             echo -e '\003[31mPlease edit config files(msys2/mingw32/mingw64/clang64/ucrt64.ini) in your MSYS2 install directory.\033[0m' 
         fi &&
-        if [[ $NO_VIM -eq 1 ]];then
+        if [[ $NO_VIM -ne 0 ]];then
             pacman -S vim
+        fi &&
+        if [[ $NO_TMUX -ne 0 ]];then
+            pacman -S tmux
         fi &&
         return 0 || 
         return 1
     elif echo $(unmae -a) | grep -P "^MINGW" > /dev/null;then
         #Git bash
-        echo Sorry, Git bash doest support zsh!
+        echo "\033[31m Sorry, Git bash doest support zsh! \033[0m"
         return 1
     else
-        echo Unknown Operating system!
+        echo "\033[31m Unknown Operating system! \033[0m"
         return 1
     fi
 }
 
 function backup_if_exists() {
-    if [[ -f $1 || -d $1 ]];then
-        if [[ ! ( -d $OLD_DOTFILES ) ]];then
-            mkdir $OLD_DOTFILES
-        fi
-        mv $1 $OLD_DOTFILES
+    if [[ ! ( -d $OLD_DOTFILES ) ]];then
+        mkdir $OLD_DOTFILES
     fi
+    mv $1 $OLD_DOTFILES
 }
 
 # config zsh
@@ -74,10 +80,11 @@ function CONFIG_ZSH(){
             echo no | bash -c "$(curl -x $PROXY -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | sed -E 's/github\.com/hub\.fastgit\.org/g')"
         else
             echo no | bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-        fi
+        fi &&
         if echo $(uname -a) | grep -P '^Linux' > /dev/null;then
             echo Try changing default shell to zsh... &&
-                sudo cp /etc/passwd ~/passwd.bak && sudo sed -i -E "s%(^$USER.*)/bin/bash%$(which zsh)%" /etc/passwd &&
+                grep -P "^$USER.*/bin/bash^" | xargs -I line echo "\033[31m $(echo 'line' | sed -E "s%^(^USER.*)/bin/bash%\1$(which zsh)") \033[0m"
+            sudo cp /etc/passwd ~/passwd.bak && sudo sed -i -E "s%(^$USER.*)/bin/bash%$(which zsh)%" /etc/passwd &&
             echo Success! || echo Failed, please check.
         fi
     fi &&
@@ -95,7 +102,8 @@ function CONFIG_ZSH(){
     if [[ ! -d ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting ]];then
         git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
     fi
-    if [[ ! -f $HOME/.zshrc ]];then
+    if [[ ! -f $HOME/.zshrc -o ! diff ~/.zshrc zsh/zshrc > /dev/null ]];then
+        backup_if_exists ~/.zshrc
         if echo $(uname -a) | grep -P '^Linux' > /dev/null;then
             # Linux
             ln -s "$(pwd)/zsh/zshrc" ~/.zshrc 
@@ -122,22 +130,37 @@ function CONFIG_VIM(){
         
         # curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
     fi
-    if echo $(uname) | grep -q Linux > /dev/null ; then
-        # notice that source file path in symbol link base on 
-        # where the symbol link located if use related path
-        ln -s "$(pwd)/vim/vimrc" ~/.vimrc 
-    else
-        echo "WIN detected"
-        echo '
-        mklink "<1>/.vimrc" "<2>/vim/vimrc"  
-        ' | sed "s%<1>%$(cygpath -m $HOME)%" | sed "s%<2>%$(cygpath -m $(pwd))%" >> $HOME/mklink.bat
-        
-        read -p 'Do you want to remap <Esc - CapsLock> ?(y/N)' ans ;ans=${ans^^}
+    if [[ ! -f ~/.vimrc -o ! diff ~/.vimrc vim/vimrc > /dev/null ]];then
+        backup_if_exists ~/.vimrc
+        if echo $(uname) | grep -q Linux > /dev/null ; then
+            # notice that source file path in symbol link base on 
+            # where the symbol link located if use related path
+            ln -s "$(pwd)/vim/vimrc" ~/.vimrc 
+        else
+            echo '
+            mklink "<1>/.vimrc" "<2>/vim/vimrc"  
+            ' | sed "s%<1>%$(cygpath -m $HOME)%" | sed "s%<2>%$(cygpath -m $(pwd))%" >> $HOME/mklink.bat
+            
+            read -p 'Do you want to remap <Esc - CapsLock> ?(y/N)' ans ;ans=${ans^^}
 
-        if echo $ans | grep -P '^Y$' > /dev/null;then
-            start '.\remap.reg'
-            read -p 'Remap will make effect after log out and log in, want to log out after install all the dotfiles?(n/Y)' ans1
-            ans1=${ans1^^}
+            if echo $ans | grep -P '^Y$' > /dev/null;then
+                start '.\remap.reg'
+                read -p 'Remap will make effect after log out and log in, want to log out after install all the dotfiles?(n/Y)' ans1
+                ans1=${ans1^^}
+            fi
+        fi
+    fi
+}
+
+function CONFIG_TMUX(){
+    if [[ ! -f ~/.tmux.conf -o ! diff tmux/tmux.conf ~/.tmux.conf ]];then
+        backup_if_exists ~/.tmux.conf
+        if echo $(uname -a) | grep -P '^Linux' > /dev/null;then
+            ln -s "$(pwd)/tmux/tmux.conf" ~/.tmux.conf
+        else
+            echo '
+            mklink "<1>/.tmux.conf" "<2>/tmux/tmux.conf"  
+            ' | sed "s%<1>%$(cygpath -m $HOME)%" | sed "s%<2>%$(cygpath -m $(pwd))%" >> $HOME/mklink.bat
         fi
     fi
 }
