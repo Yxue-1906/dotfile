@@ -75,7 +75,7 @@ function CONFIG_ZSH(){
         fi
         if echo $(uname -a) | grep -P '^Linux' > /dev/null;then
             echo Try changing default shell to zsh... &&
-            sudo cp /etc/passwd ~/passwd.bak && sudo sed -i "s/$USER" /etc/passwd &&
+                sudo cp /etc/passwd ~/passwd.bak && sudo sed -i -E "s%(^$USER.*)/bin/bash%$(which zsh)" /etc/passwd &&
             echo Success! || echo Failed, please check.
         fi
     fi &&
