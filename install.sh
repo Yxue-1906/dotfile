@@ -117,7 +117,7 @@ function CONFIG_ZSH(){
 }
 
 function CONFIG_VIM(){
-    if [[ ! ( -f ~/.vim/autoload/plug.vim ) ]];then
+    if [[ ! \( -f ~/.vim/autoload/plug.vim \) ]];then
         echo "can't detect vim-plug, install now"
         mkdir -p ~/.vim/autoload > /dev/null 2>&1;
         if [[ $USE_PROXY -ne 0 ]];then
@@ -130,7 +130,7 @@ function CONFIG_VIM(){
         
         # curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
     fi
-    if [[ ! -f ~/.vimrc || ! diff ~/.vimrc vim/vimrc > /dev/null ]];then
+    if [[ \( ! -f ~/.vimrc \) || \( ! diff ~/.vimrc vim/vimrc > /dev/null \) ]];then
         backup_if_exists ~/.vimrc
         if echo $(uname) | grep -q Linux > /dev/null ; then
             # notice that source file path in symbol link base on 
