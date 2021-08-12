@@ -83,8 +83,8 @@ function CONFIG_ZSH(){
         fi &&
         if echo $(uname -a) | grep -P '^Linux' > /dev/null;then
             echo Try changing default shell to zsh... &&
-                grep -P "^$USER.*/bin/bash^" | xargs -I line echo "\033[31m $(echo 'line' | sed -E "s%^(^USER.*)/bin/bash%\1$(which zsh)") \033[0m"
-            sudo cp /etc/passwd ~/passwd.bak && sudo sed -i -E "s%(^$USER.*)/bin/bash%$(which zsh)%" /etc/passwd &&
+                grep -P "^$USER.*/bin/.*sh^" | xargs -I line echo "\033[31m $(echo 'line' | sed -E "s%^(^USER.*)/bin/.*sh%\1$(which zsh)") \033[0m"
+            sudo cp /etc/passwd ~/passwd.bak && sudo sed -i -E "s%(^$USER.*)/bin/.*sh%$(which zsh)%" /etc/passwd &&
             echo Success! || echo Failed, please check.
         fi
     fi &&
