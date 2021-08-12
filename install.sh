@@ -19,6 +19,8 @@ function BACKUP_INIT(){
         if [[ -z "$PROXY" ]];then
             PROXY="socks5://localhost:10808";
         fi
+	git config --global http.https://github.com.proxy $PROXY
+	git config --global https.https://github.com.proxy $PROXY
     fi
 }
 
@@ -116,9 +118,8 @@ function CONFIG_VIM(){
         else
             curl https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim > ~/.vim/autoload/plug.vim
         fi && echo Install vim-plug successfull! ||
-        (echo "Error when download vim-plug, please check your proxy!" && rm -f ~/.vim/autoload/plug.vim)
+        (echo "Error when download vim-plug, please check your proxy!" && rm -f ~/.vim/autoload/plug.vim && return 1)
         
-        return 1
         # curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
     fi
     if echo $(uname) | grep -q Linux > /dev/null ; then
@@ -146,6 +147,8 @@ if SET_UP_APP;then
     CONFIG_ZSH
 fi
 CONFIG_VIM
+git config --global --unset http.https://github.com.proxy
+git config --global --unset https.https://github.com.proxy
 if [[ -f $HOME/mklink.bat ]];then
     start $HOME/mklink.bat
 fi
