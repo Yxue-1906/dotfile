@@ -32,6 +32,11 @@ function SET_UP_APP(){
         sudo apt update
         if [[ $NO_ZSH -ne 0 ]];then
             sudo apt install zsh
+            echo Try changing default shell to zsh... ||
+                grep -P "^$USER.*/bin/.*sh^" /etc/passwd | xargs -I line echo "\033[31m $(echo 'line' | sed -E "s%^(^USER.*)/bin/.*sh%\1$(command -v zsh)%") \033[0m"
+            read -r -p "Is it correct?(y/N)" ans
+            sudo cp /etc/passwd ~/passwd.bak && sudo sed -i -E "s%(^$USER.*)/bin/.*sh%\1$(command -v zsh)%" /etc/passwd &&
+            echo Success! || echo Failed, please check.
         fi &&
         if [[ $NO_VIM -ne 0 ]];then
             sudo apt install vim
@@ -69,7 +74,7 @@ function backup_if_exists() {
     if [[ ! ( -d $OLD_DOTFILES ) ]];then
         mkdir $OLD_DOTFILES
     fi
-    mv $1 $OLD_DOTFILES
+    mv $1 $OLD_DOTFILES 2> /dev/null
 }
 
 # config zsh
@@ -79,12 +84,6 @@ function CONFIG_ZSH(){
             echo no | bash -c "$(curl -x $PROXY -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | sed -E 's/github\.com/hub\.fastgit\.org/g')"
         else
             echo no | bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-        fi &&
-        if uname -a | grep -P '^Linux' > /dev/null;then
-            echo Try changing default shell to zsh... &&
-                grep -P "^$USER.*/bin/.*sh^" | xargs -I line echo "\033[31m $(echo 'line' | sed -E "s%^(^USER.*)/bin/.*sh%\1$(command -v zsh)%") \033[0m"
-            sudo cp /etc/passwd ~/passwd.bak && sudo sed -i -E "s%(^$USER.*)/bin/.*sh%$(command -v zsh)%" /etc/passwd &&
-            echo Success! || echo Failed, please check.
         fi
     fi &&
     if [[ ! -d ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k ]];then
@@ -169,6 +168,7 @@ if SET_UP_APP;then
     CONFIG_ZSH
 fi
 CONFIG_VIM
+CONFIG_TMUX
 git config --global --unset http.https://github.com.proxy
 git config --global --unset https.https://github.com.proxy
 if [[ -f $HOME/mklink.bat ]];then
