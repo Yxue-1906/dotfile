@@ -102,7 +102,7 @@ function CONFIG_ZSH(){
     if [[ ! -d ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting ]];then
         git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
     fi
-    if [[ ! -f $HOME/.zshrc || ! diff ~/.zshrc zsh/zshrc > /dev/null ]];then
+    if [[ \( ! -f $HOME/.zshrc \) || \( ! diff ~/.zshrc zsh/zshrc > /dev/null \) ]];then
         backup_if_exists ~/.zshrc
         if echo $(uname -a) | grep -P '^Linux' > /dev/null;then
             # Linux
