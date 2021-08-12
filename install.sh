@@ -69,9 +69,14 @@ function backup_if_exists() {
 function CONFIG_ZSH(){
     if [[ ! -d ~/.oh-my-zsh ]];then
         if [[ $USE_PROXY -ne 0 ]];then
-            bash -c "$(curl -x $PROXY -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | sed -E 's/github\.com/hub\.fastgit\.org/g')"
+            echo no | bash -c "$(curl -x $PROXY -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | sed -E 's/github\.com/hub\.fastgit\.org/g')"
         else
-            bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+            echo no | bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+        fi
+        if echo $(uname -a) | grep -P '^Linux' > /dev/null;then
+            echo Try changing default shell to zsh... &&
+            sudo cp /etc/passwd ~/passwd.bak && sudo sed -i "s/$USER" /etc/passwd &&
+            echo Success! || echo Failed, please check.
         fi
     fi &&
     if [[ ! -d ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k ]];then
@@ -110,9 +115,9 @@ function CONFIG_VIM(){
             curl -x $PROXY https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim | sed -E 's/github(\\?\.)com/hub.fastgit\1org/g' > ~/.vim/autoload/plug.vim
         else
             curl https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim > ~/.vim/autoload/plug.vim
-        fi && return 0 ||
-        echo "Error when download vim-plug, please check your proxy!"
-        rm -f ~/.vim/autoload/plug.vim
+        fi && echo Install vim-plug successfull! ||
+        (echo "Error when download vim-plug, please check your proxy!" && rm -f ~/.vim/autoload/plug.vim)
+        
         return 1
         # curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
     fi
