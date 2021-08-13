@@ -74,7 +74,7 @@ function backup_if_exists() {
     if [[ ! ( -d $OLD_DOTFILES ) ]];then
         mkdir $OLD_DOTFILES
     fi
-    mv $1 $OLD_DOTFILES
+    mv $1 $OLD_DOTFILES 2> /dev/null
 }
 
 # config zsh
@@ -168,6 +168,7 @@ if SET_UP_APP;then
     CONFIG_ZSH
 fi
 CONFIG_VIM
+CONFIG_TMUX
 git config --global --unset http.https://github.com.proxy
 git config --global --unset https.https://github.com.proxy
 if [[ -f $HOME/mklink.bat ]];then
