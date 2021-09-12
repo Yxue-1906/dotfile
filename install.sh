@@ -92,6 +92,7 @@ function CONFIG_ZSH(){
         else
             git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
         fi
+        ln -s "$(pwd)/zsh/p10k.zsh" ~/.p10k.zsh
         echo "Maybe you need to install fonts to get best experience"
     fi &&
     if [[ ! -d ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions ]];then
