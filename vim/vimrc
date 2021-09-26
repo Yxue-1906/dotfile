@@ -155,6 +155,8 @@ set backspace=indent,eol,start
 
 " Unbind some useless/annoying default key bindings.
 nmap Q <Nop> " 'Q' in normal mode enters Ex mode. You almost never want this.
+nmap j gj " move to next line as you see
+nmap k gk " move to last line as you see
 
 " Disable audible bell because it's annoying.
 set noerrorbells visualbell t_vb=
