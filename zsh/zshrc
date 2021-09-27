@@ -113,3 +113,8 @@ source $ZSH/oh-my-zsh.sh
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+alias gcc="gcc -g -std=c11 -Wall"
+alias gccg="gcc -g -std=c11 -Wall -DDEBUG"
+alias g++="g++ -g -std=c++11 -Wall"
+alias g++d="g++ -g -std=c++11 -Wall -DDEBUG"
