@@ -124,8 +124,11 @@ set hidden
 " Auto reload from disk when there is any change from outside vim
 set autoread
 
-" Let ]c move to center of the screen
-nnoremap ]c j]cztk
+" Let search results appear at center of the screen
+nnoremap ]c j]czz
+nnoremap [c j[czz
+nnoremap n nzz
+nnoremap N Nzz
 
 " Search
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
