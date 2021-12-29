@@ -17,7 +17,8 @@ function BACKUP_INIT(){
     NO_VIM=$(command -v vim > /dev/null;echo $?)
     NO_TMUX=$(command -v tmux > /dev/null;echo $?)
     if [[ $USE_PROXY -ne 0 ]];then
-        read -r -p "\033[31m Please specify your proxy or enter to use default proxy\033[0m \033[41;37m socks5://localhost:10808: \033[0m" PROXY
+        echo -e "\033[31m Please specify your proxy or enter to use default proxy\033[0m \033[41;37m socks5://localhost:10808: \033[0m"
+        read -r PROXY
         if [[ -z "$PROXY" ]];then
             PROXY="socks5://localhost:10808";
         fi
@@ -50,7 +51,7 @@ function SET_UP_APP(){
         # MSYS
         if [[ $NO_ZSH -ne 0 ]];then
             pacman -S zsh
-            echo -e '\003[31mPlease edit config files(msys2/mingw32/mingw64/clang64/ucrt64.ini) in your MSYS2 install directory.\033[0m' 
+            echo -e '\033[31m Please edit config files(msys2/mingw32/mingw64/clang64/ucrt64.ini) in your MSYS2 install directory.\033[0m' 
         fi &&
         if [[ $NO_VIM -ne 0 ]];then
             pacman -S vim
@@ -62,10 +63,10 @@ function SET_UP_APP(){
         return 1
     elif uname -a | grep -P "^MINGW" > /dev/null;then
         #Git bash
-        echo "\033[31m Sorry, Git bash doest support zsh! \033[0m"
+        echo -e "\033[31m Sorry, Git bash doest support zsh! \033[0m"
         return 1
     else
-        echo "\033[31m Unknown Operating system! \033[0m"
+        echo -e "\033[31m Unknown Operating system! \033[0m"
         return 1
     fi
 }
