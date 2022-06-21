@@ -121,4 +121,8 @@ alias g++d="g++ -g -std=c++11 -Wall -DDEBUG"
 
 if uname -a | grep "WSL" > /dev/null ;then
     export GATEWAY_IP=$(ip route | grep default | sed -E 's/[a-z ]*([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+    export PROXY_HTTP="http://$GATEWAY_IP:10809"
+    export PROXY_SOCKS="socks5://$GATEWAY_IP:10808"
+    alias sshp="ssh -o \"ProxyCommand=nc -x $GATEWAY_IP:10808 %h %p\""
+    alias scpp="scp -o \"ProxyCommand=nc -x $GATEWAY_IP:10808 %h %p\""
 fi
