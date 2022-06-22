@@ -1,10 +1,39 @@
 #!/usr/bin/env bash
 
-function check_folder_structure() {
-  test -d vim &&
-    test -d zsh &&
-    test -d tmux && return 0
-  echo "please run script inside root of repository" && exit 255
+function print_progress() {
+    printf "${FMT_BLUE}%s${FMT_RESET}" "$*"
+}
+
+function echo_progress() {
+    print_progress "$*"
+    echo
+}
+
+function print_done() {
+    printf "${FMT_GREEN}%s${FMT_RESET}" "$1"
+}
+
+function echo_done() {
+    print_done "$*"
+    echo
+}
+
+function print_error() {
+   printf "${FMT_RED}%s${FMT_RESET}" "$1"
+}
+
+function echo_error() {
+    print_error "$*"
+    echo
+}
+
+function print_other() {
+    printf "${FMT_YELLOW}%s${FMT_RESET}" "$1"
+}
+
+function echo_other() {
+    print_other "$*"
+    echo
 }
 
 function set_up_variable() {
@@ -14,6 +43,9 @@ function set_up_variable() {
   FMT_BLUE=$(printf '\033[34m')
   FMT_BOLD=$(printf '\033[1m')
   FMT_RESET=$(printf '\033[0m')
+
+  echo_progress "checking pkg manager..."
+
   if command -v apt >>/dev/null; then
     PKG_INSTALL="sudo apt install -y"
     PKG_UPDATE="sudo apt update -y"
@@ -21,20 +53,30 @@ function set_up_variable() {
     PKG_INSTALL="sudo yum install -y"
     PKG_UPDATE="true"
   elif command -v pacman >>/dev/null; then
-    echo "${FMT_RED}not support for arch${FMT_RESET}" && exit 255
+    echo_error "not support for arch" && exit 255
   else
-    echo "${FMT_RED}can't find any package manager${FMT_RESET}" && exit 255
+    echo_error "can't find any package manager" && exit 255
   fi
+  UPDATED=false
+
+  echo_progress "checking networking..."
+
   if ! nc -z -w 1 google.com 443 >/dev/null; then
-    read -r -p "could not connect to google.com, please specify your proxy, or use ${FMT_BLUE}http://localhost:10809${FMT_RESET} by default:" PROXY
+    printf "could not connect to google.com, please specify your proxy, or use "
+    print_other "http://localhost:10809"
+    printf " by default:"
+    read -r PROXY
     echo -e "proxy is: ${PROXY:=http://localhost:10809}"
     if ! grep -P "^http://.*?:[[:digit:]]+$" <<<"$PROXY" >/dev/null 2>&1; then
-      echo -e 'proxy should match pattern "^http://.*?:[[:digit:]]+$"' && exit 255
+      echo_error 'proxy should match pattern "^http://.*?:[[:digit:]]+$"' && exit 255
     fi
+
+    echo_progress "checking proxy..."
+
     if ! nc -z -w 1 \
       $(sed -E "s%^http://(.*?):[[:digit:]]+$%\1%" <<<"$PROXY") \
       $(sed -E "s%^http://.*?:([[:digit:]]+)$%\1%" <<<"$PROXY"); then
-      echo -e "${FMT_RED}could not connect to proxy!!${FMT_RESET}";
+      echo_error "could not connect to proxy!!";
       read -r -p "continue anyway? [y/N]" opt
       case $opt in
         y*|Y*)unset PROXY; ;;
@@ -44,30 +86,43 @@ function set_up_variable() {
   fi
 }
 
+function check_folder_structure() {
+  echo_progress "checking folder structure...";
+  test -d vim &&
+    test -d zsh &&
+    test -d tmux && return 0
+  echo_error "please run script inside root of repository" && exit 255
+}
+
 function backup_and_link() {
+  echo_progress "backing up $1 and trying to link to $2"
+
   if [ -h "$1" ]; then
-    echo -e "${FMT_YELLOW}original $1 points to $(readlink -f "$1")${FMT_RESET}";
     if [ "$(readlink -f "$1")" == "$(readlink -f "$2")" ] ||
         [ "$(readlink -f "$1")" -nt "$(readlink -f "$2")" ];then
       return;
     fi
     rm -f "$1" || {
-      echo -e "${FMT_RED}failed remove $1${FMT_RESET}" && return 255
+      echo_error "failed remove $1" && return 255
     }
     ln -s "$(readlink -f "$2")" "$1" || {
-      echo -e "${FMT_RED}failed create symbol link${FMT_RESET}" && return 255
+      echo_error "failed create symbol link" && return 255
     }
   elif [ -e "$1" ] && [ "$1" -ot "$(readlink -f "$2")" ]; then
-    mv "$1" "$1.bak.$(date -u +"%Y%m%d%H%M%S")" || {
-      echo -e "${FMT_RED}failed create backup${FMT_RESET}" && return 255
+    BACKUP_NAME="$1.bak.$(date -u +"%Y%m%d%H%M%S")"
+    mv "$1" "$BACKUP_NAME" || {
+      echo_error "failed create backup" && return 255
     }
+    print_progress "backup $1 as $BACKUP_NAME";
     ln -s "$(readlink -f "$2")" "$1" || {
-      echo -e "${FMT_RED}failed create symbol link${FMT_RESET}" && return 255
+      echo_error "failed create symbol link" && return 255
     };
   elif [ ! -e "$1" ]; then
     ln -s "$(readlink -f "$2")" "$1" || {
-      echo -e "${FMT_RED}failed create symbol link${FMT_RESET}" && return 255
+      echo_error "failed create symbol link" && return 255
     };
+  else
+    return;
   fi
 }
 
@@ -76,15 +131,17 @@ function backup_and_replace() {
 }
 
 function install_package() {
-  for pkg in "$@"; do
-    if ! command -v $pkg > /dev/null 2>&1; then TO_INSTALL="$TO_INSTALL $pkg"; fi
-  done
-  if [ -z "$TO_INSTALL" ]; then return 0; fi
+#  for pkg in "$@"; do
+#    if ! command -v $pkg > /dev/null 2>&1; then TO_INSTALL="$TO_INSTALL $pkg"; fi
+#  done
+#  if [ -z "$TO_INSTALL" ]; then return 0; fi
   if LANG= sudo -n -v 2>&1 | grep -q "may not run sudo"; then
-    echo "${FMT_RED}please run script with sudo privilege${FMT_RESET}" && return 255
+    echo_error "please run script with sudo privilege" && return 255
   fi
-  $PKG_UPDATE &&
-    $PKG_INSTALL "$@"
+  if ! $UPDATED;then
+    $PKG_UPDATE && UPDATED=true;
+  fi
+  $PKG_INSTALL "$@"
 }
 
 function git_clone() {
@@ -93,58 +150,65 @@ function git_clone() {
 }
 
 function install_and_config_zsh() {
+  echo_progress "install and config zsh..."
+
   install_package zsh || {
-    echo -e "${FMT_RED}failed install zsh${FMT_RESET}" && return 255
+    echo_error "failed install zsh" && return 255
   }
   backup_and_link ~/.zshrc zsh/zshrc &&
     backup_and_link ~/.oh-my-zsh zsh/oh-my-zsh &&
     backup_and_link ~/.p10k.zsh zsh/p10k.zsh || { # now use theme p10k, so...
-      echo -e "${FMT_RED}failed config zsh${FMT_RESET}" && return 255
+      echo_error "failed config zsh" && return 255
     }
   while [ $(basename -- $SHELL) != "zsh" ]; do
-    printf "change default shell to zsh? [y/N]"
-    read -r opt
+    read -r -p "change default shell to zsh? [y/N]" opt
     case $opt in
       y* | Y*)  ;;
       n* | N* | "") break; ;;
     esac
     sudo -k chsh -s "$(command -v zsh)" "$USER" || {
-      echo "${FMT_RED}${FMT_BOLD}change shell failed!!${FMT_RESET}" && return 255
+      echo_error "change shell failed!!" && return 255
     }
     break
   done
-  echo -e "${FMT_GREEN}install and config zsh done${FMT_RESET}"
+
+  echo_done "install and config zsh done"
 }
 
 function install_and_config_vim() {
+  echo_progress "install and config vim..."
+
   install_package vim || {
-    echo -e "${FMT_RED}failed install vim${FMT_RESET}" && return 255
+    echo_error "failed install vim" && return 255
   }
   backup_and_link ~/.vimrc vim/vimrc || {
-    echo -e "${FMT_RED}failed config vim${FMT_RESET}" && return 255
+    echo_error "failed config vim" && return 255
   }
   if [ ! -d ~/.vim/autoload ];then
     mkdir -p ~/.vim/autoload || {
-      echo -e "${FMT_RED}failed make dir $HOME/.vim/autoload${FMT_RESET}" && return 255
+      echo_error "failed make dir $HOME/.vim/autoload" && return 255
     }
   fi
   if [ ! -e ~/.vim/autoload/plug.vim ]; then
     ln -s "$(pwd)/vim/vim-plug/plug.vim" ~/.vim/autoload/plug.vim || {
-      echo -e "${FMT_RED}failed create symbol link for $HOME/.vim/autoload/plug.vim${FMT_RESET}"
+      echo_error "failed create symbol link for $HOME/.vim/autoload/plug.vim"
       return 255;
     }
   fi
-  echo -e "${FMT_GREEN}install and config vim done${FMT_RESET}"
+  echo_done "install and config vim done"
 }
 
 function install_and_config_tmux() {
+  echo_progress "install and config tmux..."
+
   install_package tmux || {
-    echo -e "${FMT_RED}failed install tmux${FMT_RESET}" && return 255
+    echo_error "failed install tmux" && return 255
   }
   backup_and_link ~/.tmux.conf tmux/tmux.conf || {
-    echo -e "${FMT_RED}failed config tmux${FMT_RESET}" && return 255
+    echo_error "failed config tmux" && return 255
   }
-  echo -e "${FMT_GREEN}install and config tmux done${FMT_RESET}"
+
+  echo_done "install and config tmux done"
 }
 
 function show_menu() {
@@ -183,8 +247,8 @@ function show_menu() {
 
 function main() {
   echo "DOTFILE_LOCATION=$(pwd)" > ~/.dotfile_config
-  check_folder_structure;
   set_up_variable;
+  check_folder_structure;
   show_menu;
 }
 
