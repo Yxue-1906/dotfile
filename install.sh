@@ -26,18 +26,16 @@ function set_up_variable() {
     echo "${FMT_RED}can't find any package manager${FMT_RESET}" && exit 255
   fi
   if ! nc -z -w 1 google.com 443 >/dev/null; then
-    echo -e "could not connect to google.com, please specify your proxy, or use ${FMT_BLUE}http://localhost:10809${FMT_RESET} by default:"
-    read -r PROXY
+    read -r -p "could not connect to google.com, please specify your proxy, or use ${FMT_BLUE}http://localhost:10809${FMT_RESET} by default:" PROXY
     echo -e "proxy is: ${PROXY:=http://localhost:10809}"
     if ! grep -P "^http://.*?:[[:digit:]]+$" <<<"$PROXY" >/dev/null 2>&1; then
       echo -e 'proxy should match pattern "^http://.*?:[[:digit:]]+$"' && exit 255
     fi
     if ! nc -z -w 1 \
-      $(sed -E "s/^http://(.*?):[[:digit:]]+$" <<<"$PROXY") \
-      $(sed -E "s/^http://.*?:([[:digit:]]+)$" <<<"$PROXY"); then
+      $(sed -E "s%^http://(.*?):[[:digit:]]+$%\1%" <<<"$PROXY") \
+      $(sed -E "s%^http://.*?:([[:digit:]]+)$%\1%" <<<"$PROXY"); then
       echo -e "${FMT_RED}could not connect to proxy!!${FMT_RESET}";
-      echo -e "continue anyway? [y/N]"
-      read -r opt;
+      read -r -p "continue anyway? [y/N]" opt
       case $opt in
         y*|Y*)unset PROXY; ;;
         n*|N*|"") exit 255; ;;
