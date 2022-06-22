@@ -59,7 +59,7 @@ function backup_and_link() {
     ln -s "$(readlink -f "$2")" "$1" || {
       echo -e "${FMT_RED}failed create symbol link${FMT_RESET}" && return 255
     }
-  elif [ "$1" -ot "$(readlink -f "$2")" ]; then
+  elif [ -e "$1" ] && [ "$1" -ot "$(readlink -f "$2")" ]; then
     mv "$1" "$1.bak.$(date -u +"%Y%m%d%H%M%S")" || {
       echo -e "${FMT_RED}failed create backup${FMT_RESET}" && return 255
     }
