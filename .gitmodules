@@ -10,3 +10,6 @@
 [submodule "zsh/custom/plugins/zsh-syntax-highlighting"]
 	path = zsh/custom/plugins/zsh-syntax-highlighting
 	url = ../../zsh-users/zsh-syntax-highlighting.git
+[submodule "vim/vim-plug"]
+	path = vim/vim-plug
+	url = ../../junegunn/vim-plug.git
