@@ -15,11 +15,11 @@ function set_up_variable() {
   FMT_BOLD=$(printf '\033[1m')
   FMT_RESET=$(printf '\033[0m')
   if command -v apt >>/dev/null; then
-    PAC_MAN="sudo apt install -y"
-    PAC_UPDATE="sudo apt update -y"
+    PKG_INSTALL="sudo apt install -y"
+    PKG_UPDATE="sudo apt update -y"
   elif command -v yum >>/dev/null; then
-    PAC_MAN="sudo yum install -y"
-    PAC_UPDATE="sudo yum check-update -y"
+    PKG_INSTALL="sudo yum install -y"
+    PKG_UPDATE="true"
   elif command -v pacman >>/dev/null; then
     echo "${FMT_RED}not support for arch${FMT_RESET}" && exit 255
   else
@@ -85,8 +85,8 @@ function install_package() {
   if LANG= sudo -n -v 2>&1 | grep -q "may not run sudo"; then
     echo "${FMT_RED}please run script with sudo privilege${FMT_RESET}" && return 255
   fi
-  $PAC_UPDATE &&
-    $PAC_MAN "$@"
+  $PKG_UPDATE &&
+    $PKG_INSTALL "$@"
 }
 
 function git_clone() {
