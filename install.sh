@@ -181,6 +181,7 @@ function show_menu() {
 }
 
 function main() {
+  echo "DOTFILE_LOCATION=$(pwd)" > ~/.dotfile_config
   check_folder_structure;
   set_up_variable;
   show_menu;
