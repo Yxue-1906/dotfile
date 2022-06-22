@@ -107,8 +107,8 @@ function install_and_config_zsh() {
     printf "change default shell to zsh? [y/N]"
     read -r opt
     case $opt in
-      y* | Y*) break ;;
-      n* | N* | "") ;;
+      y* | Y*)  ;;
+      n* | N* | "") break; ;;
     esac
     sudo -k chsh -s "$(command -v zsh)" "$USER" || {
       echo "${FMT_RED}${FMT_BOLD}change shell failed!!${FMT_RESET}" && return 255
@@ -125,12 +125,12 @@ function install_and_config_vim() {
   backup_and_link ~/.vimrc vim/vimrc || {
     echo -e "${FMT_RED}failed config vim${FMT_RESET}" && return 255
   }
-  [ -d ~/.vim/autoload ] && mkdir -p ~/.vim/autoload || {
-    echo -e "${FMT_RED}failed make dir $HOME/.vim/autoload" && return 255
+  [ ! -d ~/.vim/autoload ] && mkdir -p ~/.vim/autoload || {
+    echo -e "${FMT_RED}failed make dir $HOME/.vim/autoload${FMT_RESET}" && return 255
   }
-  [ -e ~/.vim/autoload/plug.vim ] &&
+  [ ! -e ~/.vim/autoload/plug.vim ] &&
     ln -s "$(pwd)/vim/vim-plug/plug.vim" ~/.vim/autoload/plug.vim || {
-      echo -e "${FMT_RED}failed create symbol link for $HOME/.vim/autoload/plug.vim"
+      echo -e "${FMT_RED}failed create symbol link for $HOME/.vim/autoload/plug.vim${FMT_RESET}"
       return 255;
     }
   echo -e "${FMT_GREEN}install and config vim done${FMT_RESET}"
