@@ -19,7 +19,7 @@ function set_up_variable() {
     PAC_UPDATE="sudo apt update -y"
   elif command -v yum >>/dev/null; then
     PAC_MAN="sudo yum install -y"
-    PAC_UPDATE="sudo yum update -y"
+    PAC_UPDATE="sudo yum check-update -y"
   elif command -v pacman >>/dev/null; then
     echo "${FMT_RED}not support for arch${FMT_RESET}" && exit 255
   else
@@ -122,10 +122,9 @@ function install_and_config_vim() {
   install_package vim || {
     echo -e "${FMT_RED}failed install vim${FMT_RESET}" && return 255
   }
-  backup_and_link ~/.vimrc vim/vimrc &&
-    backup_and_link ~/.vim vim/dotvim || {
-      echo -e "${FMT_RED}failed config vim${FMT_RESET}" && return 255
-    }
+  backup_and_link ~/.vimrc vim/vimrc || {
+    echo -e "${FMT_RED}failed config vim${FMT_RESET}" && return 255
+  }
   [ -d ~/.vim/autoload ] && mkdir -p ~/.vim/autoload || {
     echo -e "${FMT_RED}failed make dir $HOME/.vim/autoload" && return 255
   }
