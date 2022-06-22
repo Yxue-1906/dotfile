@@ -125,14 +125,17 @@ function install_and_config_vim() {
   backup_and_link ~/.vimrc vim/vimrc || {
     echo -e "${FMT_RED}failed config vim${FMT_RESET}" && return 255
   }
-  [ ! -d ~/.vim/autoload ] && mkdir -p ~/.vim/autoload || {
-    echo -e "${FMT_RED}failed make dir $HOME/.vim/autoload${FMT_RESET}" && return 255
-  }
-  [ ! -e ~/.vim/autoload/plug.vim ] &&
+  if [ ! -d ~/.vim/autoload ];then
+    mkdir -p ~/.vim/autoload || {
+      echo -e "${FMT_RED}failed make dir $HOME/.vim/autoload${FMT_RESET}" && return 255
+    }
+  fi
+  if [ ! -e ~/.vim/autoload/plug.vim ]; then
     ln -s "$(pwd)/vim/vim-plug/plug.vim" ~/.vim/autoload/plug.vim || {
       echo -e "${FMT_RED}failed create symbol link for $HOME/.vim/autoload/plug.vim${FMT_RESET}"
       return 255;
     }
+  fi
   echo -e "${FMT_GREEN}install and config vim done${FMT_RESET}"
 }
 
